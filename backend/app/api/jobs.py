@@ -17,7 +17,7 @@ from app.services.job_matcher import job_matcher_service
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
-def serialize_job(job: Job, match: dict | None = None) -> dict:
+def serialize_job(job: Job, match: dict | None = None, saved: bool = False) -> dict:
     data = {
         "id": job.id,
         "source": job.source,
@@ -31,6 +31,7 @@ def serialize_job(job: Job, match: dict | None = None) -> dict:
         "experience_required": job.experience_required,
         "url": job.url,
         "posted_at": job.posted_at.isoformat() if job.posted_at else None,
+        "saved": saved,
     }
     if match:
         data.update(match)
@@ -75,10 +76,14 @@ def search_jobs(query: str, location: str | None = None, db: Session = Depends(g
             db.refresh(existing)
             persisted.append(existing)
 
+    saved_job_ids = {
+        item.job_id
+        for item in db.query(SavedJob).filter(SavedJob.user_id == user.id).all()
+    }
     response_jobs = []
     for job in persisted:
         match = job_matcher_service.analyze_match(candidate_profile, job.description or "") if candidate_profile else None
-        response_jobs.append(serialize_job(job, match))
+        response_jobs.append(serialize_job(job, match, saved=job.id in saved_job_ids))
     response_jobs.sort(key=lambda item: item.get("match_score", 0), reverse=True)
     return {"success": True, "data": {"jobs": response_jobs}, "message": "Jobs retrieved"}
 
@@ -106,7 +111,35 @@ def select_jobs_for_search(query: str, location: str | None, candidate_profile: 
 @router.get("")
 def list_jobs(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     jobs = db.query(Job).all()
-    return {"success": True, "data": {"jobs": [serialize_job(job) for job in jobs]}, "message": "Jobs listed"}
+    saved_job_ids = {
+        item.job_id
+        for item in db.query(SavedJob).filter(SavedJob.user_id == user.id).all()
+    }
+    return {"success": True, "data": {"jobs": [serialize_job(job, saved=job.id in saved_job_ids) for job in jobs]}, "message": "Jobs listed"}
+
+
+@router.get("/saved")
+def list_saved_jobs(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    saved_jobs = (
+        db.query(SavedJob)
+        .filter(SavedJob.user_id == user.id)
+        .order_by(SavedJob.created_at.desc())
+        .all()
+    )
+    return {
+        "success": True,
+        "data": {
+            "saved_jobs": [
+                {
+                    "id": saved.id,
+                    "created_at": saved.created_at.isoformat() if saved.created_at else None,
+                    "job": serialize_job(saved.job, saved=True) if saved.job else None,
+                }
+                for saved in saved_jobs
+            ]
+        },
+        "message": "Saved jobs listed",
+    }
 
 
 @router.get("/{job_id}")
