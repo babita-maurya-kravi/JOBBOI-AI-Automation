@@ -52,7 +52,7 @@ export default function AuthPage({ onAuth }) {
           <div className="mb-8 flex h-28 w-28 items-center justify-center rounded-[2rem] bg-gradient-to-br from-fuchsia-500 to-blue-500 text-white shadow-[0_0_60px_rgba(236,72,153,0.4)]">
             <Briefcase size={54} />
           </div>
-          <p className="text-sm font-black uppercase tracking-[0.28em] text-fuchsia-300">JobBot AI</p>
+          <p className="text-sm font-black uppercase tracking-[0.28em] text-fuchsia-300">AutoJob Apply</p>
           <h1 className="mt-5 text-6xl font-black leading-tight text-white">Automate. Optimize. Get Hired.</h1>
           <p className="mt-6 max-w-lg text-lg leading-8 text-slate-400">
             AI-powered job search, ATS-style resume review, skill-gap analysis, cover letters, and safe application workflow control.
@@ -76,7 +76,7 @@ export default function AuthPage({ onAuth }) {
               <Sparkles size={25} />
             </div>
             <p className="text-sm font-black uppercase tracking-[0.24em] text-fuchsia-300">Auto Apply Engine</p>
-            <h1 className="mt-2 text-3xl font-black text-white">{mode === 'login' ? 'Login to JobBot AI' : 'Create your account'}</h1>
+            <h1 className="mt-2 text-3xl font-black text-white">{mode === 'login' ? 'Login to AutoJob Apply' : 'Create your account'}</h1>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>

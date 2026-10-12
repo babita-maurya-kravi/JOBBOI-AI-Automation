@@ -24,11 +24,19 @@ This project is validated on Python 3.13 (compatible with the 3.12+ requirement 
 
 1. Copy `.env.example` to `.env`.
 2. Update environment values.
-3. Start Docker Desktop, then run:
+3. Start Docker Desktop, then run from the project root:
 
-```bash
-cd jobbot-ai
-docker compose up --build
+```powershell
+.\run.bat
+```
+
+This starts PostgreSQL, Redis, backend, and frontend in one terminal.
+
+If you prefer running Compose directly, this project uses the legacy
+`docker-compose` command on this machine:
+
+```powershell
+docker-compose up --build
 ```
 
 If Docker Desktop is not installed or the Docker engine is unavailable in your environment, use the backend-only local fallback:

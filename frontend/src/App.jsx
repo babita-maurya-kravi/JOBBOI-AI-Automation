@@ -18,11 +18,12 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-import AuthPage from './pages/AuthPage';
-import DashboardPage from './pages/DashboardPage';
+import AutoJobLoginPage from './pages/AutoJobLoginPage';
+import AutoJobDashboardPage from './pages/AutoJobDashboardPage';
 import ResumePage from './pages/ResumePage';
 import ResumeLibraryPage from './pages/ResumeLibraryPage';
 import JobsPage from './pages/JobsPage';
+import SavedJobsPage from './pages/SavedJobsPage';
 import SkillGapPage from './pages/SkillGapPage';
 import AutoApplyPage from './pages/AutoApplyPage';
 
@@ -37,9 +38,6 @@ const resultItems = [
   { label: 'Saved Jobs', icon: Bookmark, to: '/saved-jobs' },
   { label: 'Applications', icon: Briefcase, to: '/applications' },
   { label: 'Dashboard', icon: LayoutDashboard, to: '/' },
-  { label: 'Skill Gap', icon: Activity, to: '/skill-gap' },
-  { label: 'Cover Letters', icon: FileCheck2, to: '/cover-letters' },
-  { label: 'Follow-ups', icon: BellRing, to: '/follow-ups' },
   { label: 'Analytics', icon: BarChart3, to: '/analytics' },
   { label: 'Settings', icon: Settings, to: '/settings' },
 ];
@@ -75,21 +73,20 @@ function NavGroup({ title, items }) {
 
 function Sidebar({ user, onLogout }) {
   return (
-    <aside className="flex h-screen w-[280px] shrink-0 flex-col border-r border-slate-800/80 bg-[#070a14]/95">
-      <div className="border-b border-slate-800/80 p-5">
+    <aside className="flex h-screen w-[260px] shrink-0 flex-col border-r border-white/10 bg-[#0b0f24]/95">
+      <div className="border-b border-white/10 p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-blue-500 text-white shadow-[0_0_32px_rgba(236,72,153,0.35)]">
-            <Briefcase size={26} />
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-blue-500 text-white shadow-[0_0_32px_rgba(236,72,153,0.35)]">
+            <Briefcase size={22} />
           </div>
           <div>
-            <p className="text-xl font-black leading-none text-white">JobBot</p>
-            <p className="text-lg font-black leading-tight text-slate-100">AI</p>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-fuchsia-300">Auto Apply Engine</p>
+            <p className="text-sm font-black leading-none text-white">AutoJob Apply</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase text-fuchsia-300">Automation OS</p>
           </div>
         </div>
         <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold text-fuchsia-200">
           <Sparkles size={13} />
-          AI
+          AI-powered
         </div>
       </div>
 
@@ -98,11 +95,14 @@ function Sidebar({ user, onLogout }) {
         <NavGroup title="Results" items={resultItems} />
       </div>
 
-      <div className="border-t border-slate-800/80 p-4">
-        <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-3 text-xs">
-          <div className="flex items-center gap-2 text-amber-300">
-            <span className="h-2 w-2 rounded-full bg-amber-400" />
-            <span>No platform connected</span>
+      <div className="border-t border-white/10 p-4">
+        <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-xs">
+          <div className="flex items-center gap-2 text-emerald-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span>Search filters ready</span>
+          </div>
+          <div className="text-slate-500">
+            Jobs filter selected platforms only.
           </div>
         </div>
         <button
@@ -119,21 +119,21 @@ function Sidebar({ user, onLogout }) {
 
 function TopBar({ user }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-800/80 bg-[#070a14]/90 px-6 py-4 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#090d20]/90 px-5 py-4 backdrop-blur">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-sm font-semibold text-emerald-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
-            Ready
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+          <div className="flex min-w-[260px] flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-[#11152d] px-4 py-2.5 text-sm text-slate-500 shadow-inner">
+            <Search size={16} />
+            <span>Search jobs, skills, companies...</span>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1.5 text-sm font-semibold text-fuchsia-200">
-            <ShieldCheck size={15} />
-            Session: {(user?.name || 'Demo User').toUpperCase()}
-          </div>
+          <button className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-slate-300">
+            <ShieldCheck size={17} />
+          </button>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-2 text-sm text-slate-400 md:block">
-            Search jobs, skills, companies...
+          <div className="hidden text-right md:block">
+            <p className="text-sm font-black text-white">{user?.name || 'Ayush Kumar'}</p>
+            <p className="text-xs font-semibold text-slate-500">Premium Plan</p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-blue-500 text-sm font-black text-white">
             {(user?.name || 'D').charAt(0).toUpperCase()}
@@ -147,7 +147,7 @@ function TopBar({ user }) {
 function PlaceholderPage({ title, subtitle }) {
   return (
     <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6 shadow-[0_0_40px_rgba(15,23,42,0.35)]">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-fuchsia-300">JobBot AI</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-fuchsia-300">AutoJob Apply</p>
       <h1 className="mt-2 text-3xl font-black text-white">{title}</h1>
       <p className="mt-3 max-w-2xl text-sm text-slate-400">{subtitle}</p>
     </div>
@@ -160,20 +160,20 @@ function AppLayout({ user, token, onLogout }) {
       <Sidebar user={user} onLogout={onLogout} />
       <div className="min-w-0 flex-1">
         <TopBar user={user} />
-        <main className="mx-auto max-w-[1480px] p-5 md:p-6">
+        <main className="mx-auto max-w-[1540px] p-4 md:p-5">
           <Routes>
-            <Route path="/" element={<DashboardPage token={token} />} />
+            <Route path="/" element={<AutoJobDashboardPage token={token} />} />
             <Route path="/resume" element={<ResumePage token={token} />} />
             <Route path="/resume-library" element={<ResumeLibraryPage token={token} />} />
             <Route path="/ats" element={<ResumePage token={token} />} />
             <Route path="/jobs" element={<JobsPage token={token} />} />
             <Route path="/skill-gap" element={<SkillGapPage token={token} />} />
             <Route path="/auto-apply" element={<AutoApplyPage token={token} user={user} />} />
-            <Route path="/saved-jobs" element={<PlaceholderPage title="Saved Jobs" subtitle="Saved jobs from search results appear here for later review." />} />
-            <Route path="/applications" element={<PlaceholderPage title="Applications" subtitle="Track discovered, ready-to-apply, submitted, interview, rejected, and manual-action states." />} />
+            <Route path="/saved-jobs" element={<SavedJobsPage token={token} />} />
+            <Route path="/applications" element={<AutoApplyPage token={token} user={user} />} />
             <Route path="/cover-letters" element={<PlaceholderPage title="Cover Letters" subtitle="Generated drafts are saved by job so you can review them before using them." />} />
             <Route path="/follow-ups" element={<PlaceholderPage title="Follow-ups" subtitle="Schedule reminders and keep response tracking organized by application." />} />
-            <Route path="/analytics" element={<DashboardPage token={token} />} />
+            <Route path="/analytics" element={<AutoJobDashboardPage token={token} />} />
             <Route path="/versions" element={<PlaceholderPage title="Resume Versions" subtitle="Compare resume versions and ATS-style score improvements over time." />} />
             <Route path="/settings" element={<PlaceholderPage title="Settings" subtitle="Configure API keys, uploads, safe automation permissions, and source adapter settings." />} />
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -187,7 +187,15 @@ function AppLayout({ user, token, onLogout }) {
 export default function App() {
   const [authState, setAuthState] = useState(() => {
     const stored = localStorage.getItem('jobbot-auth');
-    return stored ? JSON.parse(stored) : null;
+    if (!stored) return null;
+
+    try {
+      const parsed = JSON.parse(stored);
+      return parsed?.token ? parsed : null;
+    } catch {
+      localStorage.removeItem('jobbot-auth');
+      return null;
+    }
   });
 
   useEffect(() => {
@@ -198,6 +206,12 @@ export default function App() {
     }
   }, [authState]);
 
+  useEffect(() => {
+    const handleUnauthorized = () => setAuthState(null);
+    window.addEventListener('jobbot:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('jobbot:unauthorized', handleUnauthorized);
+  }, []);
+
   const handleAuth = (data) => {
     setAuthState({ token: data.token, user: data.user });
   };
@@ -207,7 +221,7 @@ export default function App() {
   };
 
   if (!authState) {
-    return <AuthPage onAuth={handleAuth} />;
+    return <AutoJobLoginPage onAuth={handleAuth} />;
   }
 
   return <AppLayout user={authState.user} token={authState.token} onLogout={handleLogout} />;

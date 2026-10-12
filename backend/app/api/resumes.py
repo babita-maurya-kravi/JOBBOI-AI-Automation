@@ -16,12 +16,14 @@ router = APIRouter(prefix="/resumes", tags=["resumes"])
 
 
 def serialize_resume(resume: Resume) -> dict:
+    ats_analysis = ats_score_service.analyze(resume.parsed_data or {}) if resume.parsed_data else None
     return {
         "id": resume.id,
         "file_name": resume.file_name,
         "file_path": resume.file_path,
         "parsed_data": resume.parsed_data,
-        "ats_score": resume.ats_score,
+        "ats_score": resume.ats_score or (ats_analysis or {}).get("score"),
+        "ats_analysis": ats_analysis,
         "created_at": resume.created_at.isoformat() if resume.created_at else None,
     }
 

@@ -1,7 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, BriefcaseBusiness, FileUp, GraduationCap, Lightbulb, ShieldCheck, Sparkles } from 'lucide-react';
 import { analyzeResume, listResumes, uploadResume } from '../services/api';
+
+const scanSteps = [
+  'Reading PDF content',
+  'Extracting profile details',
+  'Detecting skills and experience',
+  'Calculating ATS score',
+];
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 function ScoreRing({ score, empty = false }) {
   const value = Number(score || 0);
@@ -40,10 +53,12 @@ function CategoryBar({ label, score, max, status, feedback }) {
 }
 
 export default function ResumePage({ token }) {
+  const scanSectionRef = useRef(null);
   const [resumes, setResumes] = useState([]);
   const [selectedResumeId, setSelectedResumeId] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [scanStep, setScanStep] = useState(0);
   const [error, setError] = useState('');
   const [atsResults, setAtsResults] = useState({});
 
@@ -76,25 +91,43 @@ export default function ResumePage({ token }) {
     if (!file || !token) return;
 
     setLoading(true);
+    setScanStep(0);
     setError('');
     setSelectedFile(file.name);
+
+    window.setTimeout(() => {
+      scanSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+
+    const startedAt = Date.now();
+    const scanTimer = window.setInterval(() => {
+      setScanStep((current) => Math.min(current + 1, scanSteps.length - 1));
+    }, 700);
 
     try {
       const result = await uploadResume({ file, token });
       const resumeId = result.data.resume.id;
       const analysis = await analyzeResume({ resumeId, token });
+      const remainingScanTime = Math.max(0, 2600 - (Date.now() - startedAt));
+
+      if (remainingScanTime > 0) {
+        await wait(remainingScanTime);
+      }
+
+      setScanStep(scanSteps.length);
       setAtsResults((current) => ({ ...current, [resumeId]: analysis.data }));
       setSelectedResumeId(resumeId);
       await loadResumes();
     } catch (requestError) {
       setError(requestError.message);
     } finally {
+      window.clearInterval(scanTimer);
       setLoading(false);
       event.target.value = null;
     }
   };
 
-  const atsResult = activeResume ? atsResults[activeResume.id] : null;
+  const atsResult = activeResume ? atsResults[activeResume.id] || activeResume.ats_analysis : null;
   const score = atsResult?.score ?? activeResume?.ats_score ?? 0;
   const categories = atsResult?.categories || {};
   const issues = atsResult?.issues || [];
@@ -191,11 +224,37 @@ export default function ResumePage({ token }) {
         </section>
       </div>
 
-      <section className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6">
+      <section ref={scanSectionRef} className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6">
         <div className="mb-6 flex items-center gap-3">
           <Sparkles className="text-fuchsia-300" size={20} />
           <h2 className="text-xl font-black text-white">ATS Score & Recommendations</h2>
         </div>
+        {loading && (
+          <div className="mb-6 rounded-3xl border border-fuchsia-500/30 bg-fuchsia-500/10 p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-fuchsia-300">Scanning Resume</p>
+                <p className="mt-2 text-sm text-slate-300">{scanSteps[Math.min(scanStep, scanSteps.length - 1)]}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {scanSteps.map((step, index) => (
+                  <span
+                    key={step}
+                    className={`h-2 w-12 rounded-full transition ${
+                      index <= scanStep ? 'bg-fuchsia-300 shadow-[0_0_14px_rgba(217,70,239,0.6)]' : 'bg-slate-800'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-900">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-blue-500 to-emerald-400 transition-all duration-500"
+                style={{ width: `${Math.min(100, ((scanStep + 1) / scanSteps.length) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
         <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
           <div className="flex justify-center">
             <ScoreRing score={score} empty={!hasResume} />

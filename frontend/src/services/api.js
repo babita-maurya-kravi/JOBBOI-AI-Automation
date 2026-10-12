@@ -1,5 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001';
 
+function notifyUnauthorized(token) {
+  if (token && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('jobbot:unauthorized'));
+  }
+}
+
 async function apiRequest(path, { method = 'GET', token, body, isFormData = false } = {}) {
   const headers = {};
 
@@ -21,6 +27,9 @@ async function apiRequest(path, { method = 'GET', token, body, isFormData = fals
   const payload = contentType.includes('application/json') ? await response.json() : await response.text();
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyUnauthorized(token);
+    }
     const detail = typeof payload === 'object' && payload ? payload.detail || payload.message : payload;
     throw new Error(typeof detail === 'string' ? detail : 'Request failed');
   }
@@ -70,6 +79,9 @@ export function uploadResume({ file, token }) {
     const payload = contentType.includes('application/json') ? await response.json() : await response.text();
 
     if (!response.ok) {
+      if (response.status === 401) {
+        notifyUnauthorized(token);
+      }
       const detail = typeof payload === 'object' && payload ? payload.detail || payload.message : payload;
       throw new Error(typeof detail === 'string' ? detail : 'Resume upload failed');
     }
@@ -121,6 +133,17 @@ export function generateCoverLetter({ jobId, token }) {
 export function saveJob({ jobId, token }) {
   return apiRequest(`/api/jobs/${jobId}/save`, {
     method: 'POST',
+    token,
+  });
+}
+
+export function listSavedJobs(token) {
+  return apiRequest('/api/jobs/saved', { token });
+}
+
+export function removeSavedJob({ jobId, token }) {
+  return apiRequest(`/api/jobs/${jobId}/save`, {
+    method: 'DELETE',
     token,
   });
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, ClipboardCheck, ExternalLink, Play, RotateCw, ShieldAlert, Send } from 'lucide-react';
-import { listApplications, reviewApplication, startApplication, submitApplication } from '../services/api';
+import { Bookmark, CheckCircle2, ClipboardCheck, ExternalLink, Play, RotateCw, ShieldAlert, Send } from 'lucide-react';
+import { createApplication, listApplications, listSavedJobs, reviewApplication, startApplication, submitApplication } from '../services/api';
 
 const statusTone = {
   DISCOVERED: 'border-slate-700 bg-slate-800/60 text-slate-200',
@@ -63,6 +63,7 @@ function formatDate(value) {
 
 export default function AutoApplyPage({ token, user }) {
   const [applications, setApplications] = useState([]);
+  const [savedJobs, setSavedJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionId, setActionId] = useState(null);
   const [error, setError] = useState('');
@@ -81,8 +82,12 @@ export default function AutoApplyPage({ token, user }) {
     setLoading(true);
     setError('');
     try {
-      const result = await listApplications(token);
-      setApplications(result.data.applications || []);
+      const [applicationsResult, savedJobsResult] = await Promise.all([
+        listApplications(token),
+        listSavedJobs(token),
+      ]);
+      setApplications(applicationsResult.data.applications || []);
+      setSavedJobs((savedJobsResult.data.saved_jobs || []).filter((item) => item.job));
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -112,6 +117,31 @@ export default function AutoApplyPage({ token, user }) {
       if (result.data.automation?.reason) {
         setLogs((current) => [result.data.automation.reason, ...current].slice(0, 8));
       }
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleCreateDraft = async (savedJob) => {
+    setActionId(`saved-${savedJob.id}`);
+    setError('');
+    setLogs((current) => [
+      `Creating application draft: ${savedJob.job?.title || `Saved job #${savedJob.id}`}`,
+      ...current,
+    ].slice(0, 8));
+
+    try {
+      const result = await createApplication({ jobId: savedJob.job.id, token });
+      const application = result.data.application;
+      setApplications((current) => {
+        const exists = current.some((item) => item.id === application.id);
+        return exists
+          ? current.map((item) => (item.id === application.id ? application : item))
+          : [application, ...current];
+      });
+      setLogs((current) => ['Draft added to application queue', ...current].slice(0, 8));
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -214,6 +244,51 @@ export default function AutoApplyPage({ token, user }) {
             </div>
           </div>
         </div>
+
+        {savedJobs.length > 0 && (
+          <div className="mt-5 rounded-3xl border border-blue-500/20 bg-blue-500/10 p-5">
+            <div className="flex items-start gap-3">
+              <Bookmark className="mt-1 text-blue-300" size={22} />
+              <div className="min-w-0 flex-1">
+                <p className="font-black text-blue-100">Saved jobs ready for Auto Apply</p>
+                <p className="mt-2 text-sm leading-6 text-blue-100/75">Create drafts from saved jobs, then start/review/submit them in the queue below.</p>
+                <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                  {savedJobs.map((savedJob) => {
+                    const job = savedJob.job;
+                    const alreadyQueued = applications.some((application) => application.job_id === job.id);
+                    const busy = actionId === `saved-${savedJob.id}`;
+                    return (
+                      <div key={savedJob.id} className="rounded-2xl border border-blue-500/20 bg-slate-950/60 p-3">
+                        <p className="font-black text-white">{job.title}</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-400">{job.company} - {job.source}</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <a
+                            href={jobOpenUrl(job)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-3 py-2 text-xs font-black text-slate-200 transition hover:bg-slate-800"
+                          >
+                            <ExternalLink size={14} />
+                            Open
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleCreateDraft(savedJob)}
+                            disabled={busy || alreadyQueued}
+                            className="inline-flex items-center gap-2 rounded-xl bg-fuchsia-600 px-3 py-2 text-xs font-black text-white transition hover:bg-fuchsia-500 disabled:opacity-60"
+                          >
+                            <Send size={14} />
+                            {alreadyQueued ? 'Queued' : 'Draft'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-5 space-y-3">
           {applications.length === 0 ? (
