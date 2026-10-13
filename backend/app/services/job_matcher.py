@@ -19,7 +19,9 @@ class JobMatcherService:
         partial = self._partial_matches(candidate_skills, missing)
 
         skill_score = self._percent(len(matched), max(1, len(required_skills))) * 0.5
-        experience_fit = self._experience_fit(candidate_profile, job_description)
+        required_years = self._years_required(job_description)
+        resume_years = self._resume_years(candidate_profile)
+        experience_fit = self._experience_fit(candidate_profile, job_description, required_years, resume_years)
         education_fit = self._education_fit(candidate_profile, job_description)
         keyword_score = min(10, len(matched) * 2)
         seniority_fit = self._seniority_fit(candidate_profile, job_description)
@@ -36,7 +38,8 @@ class JobMatcherService:
 
         explanation = (
             f"Matched {len(matched)} of {len(required_skills)} detected job skills. "
-            f"Experience fit is {'strong' if experience_fit else 'not clearly proven'} and "
+            f"Experience fit is {'strong' if experience_fit else 'not clearly proven'}"
+            f"{f' ({resume_years} resume years vs {required_years} required)' if required_years else ''} and "
             f"education fit is {'covered' if education_fit else 'not explicit'} based on the parsed resume."
         )
 
@@ -46,6 +49,8 @@ class JobMatcherService:
             "missing_skills": missing,
             "partial_skills": partial,
             "experience_fit": experience_fit,
+            "candidate_experience_years": resume_years,
+            "required_experience_years": required_years,
             "education_fit": education_fit,
             "seniority_fit": seniority_fit,
             "keyword_matches": matched,
@@ -113,13 +118,25 @@ class JobMatcherService:
                 partial.append(skill)
         return partial
 
-    def _experience_fit(self, candidate_profile: dict, job_description: str) -> bool:
-        required_years = self._years_required(job_description)
+    def _experience_fit(self, candidate_profile: dict, job_description: str, required_years: int | None = None, resume_years: float | None = None) -> bool:
+        required_years = self._years_required(job_description) if required_years is None else required_years
         if required_years == 0:
             return True
-        resume_text = self._flatten(candidate_profile).lower()
-        resume_years = max([int(value) for value in re.findall(r"(\d+)\+?\s*years?", resume_text)] or [0])
+        resume_years = self._resume_years(candidate_profile) if resume_years is None else resume_years
         return resume_years >= required_years
+
+    def _resume_years(self, candidate_profile: dict) -> float:
+        resume_text = self._flatten(candidate_profile).lower()
+        explicit_years = [float(value) for value in re.findall(r"(\d+(?:\.\d+)?)\+?\s*years?", resume_text)]
+        duration_months = []
+        for item in candidate_profile.get("experience") or []:
+            if isinstance(item, dict) and item.get("duration_months") is not None:
+                try:
+                    duration_months.append(float(item.get("duration_months")))
+                except (TypeError, ValueError):
+                    pass
+        duration_years = sum(duration_months) / 12 if duration_months else 0
+        return round(max(max(explicit_years or [0]), duration_years), 1)
 
     def _education_fit(self, candidate_profile: dict, job_description: str) -> bool:
         lowered = job_description.lower()

@@ -6,6 +6,7 @@ import {
   BellRing,
   Bookmark,
   Briefcase,
+  MessagesSquare,
   FileCheck2,
   FileText,
   Files,
@@ -23,6 +24,7 @@ import AutoJobDashboardPage from './pages/AutoJobDashboardPage';
 import ResumePage from './pages/ResumePage';
 import ResumeLibraryPage from './pages/ResumeLibraryPage';
 import JobsPage from './pages/JobsPage';
+import SocialJobPostsPage from './pages/SocialJobPostsPage';
 import SavedJobsPage from './pages/SavedJobsPage';
 import SkillGapPage from './pages/SkillGapPage';
 import AutoApplyPage from './pages/AutoApplyPage';
@@ -30,6 +32,7 @@ import AutoApplyPage from './pages/AutoApplyPage';
 const workflowItems = [
   { label: 'Resume', icon: FileText, to: '/resume' },
   { label: 'Search Jobs', icon: Search, to: '/jobs' },
+  { label: 'Social Job Posts', icon: MessagesSquare, to: '/social-posts' },
   { label: 'Auto Apply', icon: Rocket, to: '/auto-apply' },
 ];
 
@@ -167,6 +170,7 @@ function AppLayout({ user, token, onLogout }) {
             <Route path="/resume-library" element={<ResumeLibraryPage token={token} />} />
             <Route path="/ats" element={<ResumePage token={token} />} />
             <Route path="/jobs" element={<JobsPage token={token} />} />
+            <Route path="/social-posts" element={<SocialJobPostsPage token={token} />} />
             <Route path="/skill-gap" element={<SkillGapPage token={token} />} />
             <Route path="/auto-apply" element={<AutoApplyPage token={token} user={user} />} />
             <Route path="/saved-jobs" element={<SavedJobsPage token={token} />} />

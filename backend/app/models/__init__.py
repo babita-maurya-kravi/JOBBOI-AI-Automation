@@ -5,6 +5,7 @@ from .job import Job
 from .resume import Resume
 from .resume_version import ResumeVersion
 from .saved_job import SavedJob
+from .social_job_post import SocialJobPost
 from .user import User
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "Resume",
     "ResumeVersion",
     "SavedJob",
+    "SocialJobPost",
     "User",
 ]

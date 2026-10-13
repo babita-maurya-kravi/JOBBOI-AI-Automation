@@ -60,6 +60,99 @@ export function searchJobs({ query, location, token }) {
   });
 }
 
+export function searchSocialPosts({
+  query,
+  location,
+  platforms,
+  minMatchScore,
+  classifications,
+  sourceTypes,
+  employmentType,
+  workMode,
+  includeNonJobs,
+  token,
+}) {
+  return apiRequest('/api/social-posts/search', {
+    method: 'POST',
+    token,
+    body: {
+      query,
+      location,
+      platforms,
+      min_match_score: minMatchScore,
+      classifications,
+      source_types: sourceTypes,
+      employment_type: employmentType,
+      work_mode: workMode,
+      include_non_jobs: includeNonJobs,
+    },
+  });
+}
+
+export function listSocialPosts({ query, minMatchScore, token }) {
+  const params = new URLSearchParams();
+  if (query) params.set('query', query);
+  if (minMatchScore) params.set('min_match_score', minMatchScore);
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return apiRequest(`/api/social-posts${suffix}`, { token });
+}
+
+export function importSocialPost({ postText, originalPostUrl, platform, authorName, publicationDate, token }) {
+  return apiRequest('/api/social-posts/import-url', {
+    method: 'POST',
+    token,
+    body: {
+      post_text: postText,
+      original_post_url: originalPostUrl,
+      platform,
+      author_name: authorName,
+      publication_date: publicationDate,
+    },
+  });
+}
+
+export function classifySocialPost({ postText, originalPostUrl, platform, authorName, token }) {
+  return apiRequest('/api/social-posts/classify', {
+    method: 'POST',
+    token,
+    body: {
+      post_text: postText,
+      original_post_url: originalPostUrl,
+      platform,
+      author_name: authorName,
+    },
+  });
+}
+
+export function matchSocialPost({ postId, token }) {
+  return apiRequest(`/api/social-posts/${postId}/match-resume`, {
+    method: 'POST',
+    token,
+  });
+}
+
+export function saveSocialPost({ postId, token }) {
+  return apiRequest(`/api/social-posts/${postId}/save`, {
+    method: 'POST',
+    token,
+  });
+}
+
+export function sendSocialPostFeedback({ postId, feedback, token }) {
+  return apiRequest(`/api/social-posts/${postId}/feedback`, {
+    method: 'POST',
+    token,
+    body: { feedback },
+  });
+}
+
+export function generateSocialPostCoverLetter({ postId, token }) {
+  return apiRequest(`/api/social-posts/${postId}/cover-letter`, {
+    method: 'POST',
+    token,
+  });
+}
+
 export function listResumes(token) {
   return apiRequest('/api/resumes', { token });
 }

@@ -52,6 +52,61 @@ function CategoryBar({ label, score, max, status, feedback }) {
   );
 }
 
+function formatDuration(months) {
+  const value = Number(months || 0);
+  if (!value) return '';
+  const years = Math.floor(value / 12);
+  const remainingMonths = value % 12;
+  if (years && remainingMonths) return `${years} yr ${remainingMonths} mo`;
+  if (years) return `${years} yr`;
+  return `${remainingMonths} mo`;
+}
+
+function normalizeExperienceItem(item) {
+  if (typeof item === 'string') {
+    return { title: item, description: '' };
+  }
+  const legacy = item?.description || '';
+  if (!item?.title && legacy.includes('|')) {
+    const [titlePart, companyPart] = legacy.split('|').map((part) => part.trim());
+    const companyPieces = (companyPart || '').split(',').map((part) => part.trim()).filter(Boolean);
+    return {
+      ...item,
+      title: titlePart,
+      company: companyPieces[0],
+      location: companyPieces.slice(1).join(', '),
+      description: '',
+    };
+  }
+  return {
+    title: item?.title || item?.role || legacy || 'Experience',
+    company: item?.company,
+    location: item?.location,
+    start_date: item?.start_date,
+    end_date: item?.end_date,
+    duration_months: item?.duration_months,
+    description: item?.description && item?.description !== item?.title ? item.description : '',
+  };
+}
+
+function normalizeProjectItem(item) {
+  if (typeof item === 'string') {
+    return { title: item, description: '', technologies: [] };
+  }
+  const raw = item?.description || '';
+  if (!item?.title && raw) {
+    const split = raw.match(/^(.{3,90}?)(?:\s*[:|]\s+|\s+-\s+)(.{8,})$/);
+    if (split) {
+      return { ...item, title: split[1].trim(), description: split[2].trim(), technologies: item?.technologies || [] };
+    }
+  }
+  return {
+    title: item?.title || raw || 'Project',
+    description: item?.description && item?.description !== item?.title ? item.description : '',
+    technologies: item?.technologies || [],
+  };
+}
+
 export default function ResumePage({ token }) {
   const scanSectionRef = useRef(null);
   const [resumes, setResumes] = useState([]);
@@ -143,6 +198,52 @@ export default function ResumePage({ token }) {
         </div>
         {!items?.length ? (
           <p className="text-sm text-slate-500">No {title.toLowerCase()} found in the selected resume.</p>
+        ) : title === 'Experience' ? (
+          <div className="space-y-3">
+            {items.map((item, index) => {
+              const experience = normalizeExperienceItem(item);
+              const meta = [
+                experience.company,
+                experience.location,
+                [experience.start_date, experience.end_date].filter(Boolean).join(' - '),
+                formatDuration(experience.duration_months),
+              ].filter(Boolean);
+              return (
+                <div key={`${title}-${index}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
+                  <h4 className="text-base font-black text-white">{experience.title}</h4>
+                  {meta.length > 0 && <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-fuchsia-200">{meta.join(' - ')}</p>}
+                  {experience.description ? (
+                    <p className="mt-3 leading-6 text-slate-300">{experience.description}</p>
+                  ) : (
+                    <p className="mt-3 text-slate-500">Add 2-4 responsibility or achievement lines in the resume for stronger experience matching.</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : title === 'Projects' ? (
+          <div className="space-y-3">
+            {items.map((item, index) => {
+              const project = normalizeProjectItem(item);
+              return (
+                <div key={`${title}-${index}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
+                  <h4 className="text-base font-black text-white">{project.title}</h4>
+                  {project.description ? (
+                    <p className="mt-3 leading-6 text-slate-300">{project.description}</p>
+                  ) : (
+                    <p className="mt-3 text-slate-500">Project description was not found. Add tools, features, and outcomes under this project in the resume.</p>
+                  )}
+                  {project.technologies?.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {project.technologies.map((tech) => (
+                        <span key={tech} className="rounded-xl bg-slate-950 px-2.5 py-1 text-xs font-black text-emerald-200">{tech}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className="space-y-3">
             {items.map((item, index) => (
