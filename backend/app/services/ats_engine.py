@@ -97,14 +97,29 @@ class ATSScoreService:
             improvements.append(self._improvement("Formatting", "Resume text may be hard for parsers to read", "Use a simple text-based PDF with standard headings, minimal tables, and consistent bullet formatting."))
 
         experience_entries = resume_data.get("experience") or []
+        project_entries = resume_data.get("projects") or []
         experience_detail_count = sum(len(re.findall(r"\w+", self._flatten(entry))) for entry in experience_entries)
-        experience_score = min(10, len(experience_entries) * 3 + min(4, experience_detail_count // 35))
-        if not experience_entries:
+        project_detail_count = sum(len(re.findall(r"\w+", self._flatten(entry))) for entry in project_entries)
+        duration_months = sum(
+            float(entry.get("duration_months") or 0)
+            for entry in experience_entries
+            if isinstance(entry, dict)
+        )
+        experience_score = min(
+            10,
+            len(experience_entries) * 3
+            + min(3, experience_detail_count // 30)
+            + min(2, project_detail_count // 45)
+            + (1 if duration_months else 0),
+        )
+        if not experience_entries and not project_entries:
             issues.append("Experience details are sparse")
             recommendations.append("Add detailed role descriptions with measurable outcomes.")
             improvements.append(self._improvement("Experience Relevance", "Experience section is missing or not detected", "Add role title, company, dates, and 2-4 impact bullets for each relevant role or internship."))
         elif experience_score < 7:
             improvements.append(self._improvement("Experience Relevance", "Experience section needs more role detail", "Mention tools used, business context, and outcomes for each major responsibility."))
+        else:
+            strengths.append("Experience and project details are relevant")
 
         if not resume_data.get("summary"):
             issues.append("Professional summary is missing")
